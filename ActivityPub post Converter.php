@@ -52,7 +52,7 @@ function linkplugin_settings_init() {
     // 在linkplugin设置页面添加一个新的设置区段
     add_settings_section(
         'linkplugin_section',
-        'Author ID Replacements',
+        'Author Associations',
         'linkplugin_section_callback',
         'linkplugin'
     );
@@ -60,7 +60,7 @@ function linkplugin_settings_init() {
     // 在linkplugin设置区段添加一个新的设置字段
     add_settings_field(
         'linkplugin_field',
-        'Author ID replacements',
+        'Author Associations',
         'linkplugin_field_callback',
         'linkplugin',
         'linkplugin_section'
@@ -97,7 +97,7 @@ add_action('admin_init', 'linkplugin_settings_init');
 
 // 输出设置区段的内容
 function linkplugin_section_callback() {
-    echo 'Author IDs obtained through the Reveal IDs plugin. Enter the author ID replacements here. Use the format "old_id:new_id".';
+    echo 'Author obtained through the Reveal plugin. Enter the author Associations here.';
 }
 
 // 输出设置字段的内容
@@ -113,7 +113,7 @@ function linkplugin_field_callback() {
 
     // 如果没有设置任何替换规则，就不显示任何下拉菜单
     if ($count == 0) {
-        echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add replacement" to add one.</p>';
+        echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New Associations<?php" to add one.</p>';
     } else {
         for ($i = 0; $i < $count; $i++) {
             $old_id = $old_option[$i] ?? '';
@@ -127,7 +127,7 @@ function linkplugin_field_callback() {
         
     }
 
-    echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add replacement</button></p>';
+    echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New Associations</button></p>';
 
     echo '<script>
     function linkplugin_remove_replacement(button) {

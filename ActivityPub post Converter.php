@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: ActivityPub post Converter
+ * Plugin Name: ActivityPub post
  * Plugin URI: https://github.com/MOMOZAWA3/ActivityPub-post-Converter
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO
@@ -20,8 +20,8 @@ add_action('admin_menu', 'linkplugin_settings_page');
 
 // 输出设置页面的内容
 function linkplugin_settings_page_content() {
-    // 检查用户是否有权限
-    if (!current_user_can('manage_options')) {
+    // 检查用户是否已经登录
+    if (!is_user_logged_in()) {
         return;
     }
 
@@ -43,11 +43,11 @@ function linkplugin_settings_page_content() {
     <?php
 }
 
-
 // 注册插件设置
 function linkplugin_settings_init() {
-    // 注册一个新的设置
-    register_setting('linkplugin', 'linkplugin_author_replacements', array('default' => array()));
+    // Register a new setting
+    register_setting('linkplugin', 'linkplugin_author_replacements_old', array('default' => array()));
+    register_setting('linkplugin', 'linkplugin_author_replacements_new', array('default' => array()));
 
     // 在linkplugin设置页面添加一个新的设置区段
     add_settings_section(
@@ -66,6 +66,33 @@ function linkplugin_settings_init() {
         'linkplugin_section'
     );
 }
+
+function get_user_id_dropdown($name, $selected_value, $users, $forCurrentWebsite = false) {
+    $html = '<select name="' . $name . '">';
+    // Add default empty option
+    $html .= '<option value=""></option>';
+    foreach ($users as $user) {
+        $website = $user->user_url;
+
+        $isCurrentWebsite = empty($website) || parse_url(site_url(), PHP_URL_HOST) == parse_url($website, PHP_URL_HOST);
+
+        if($forCurrentWebsite) {
+            if (!$isCurrentWebsite) {
+                continue;
+            }
+        } else {
+            if ($isCurrentWebsite) {
+                continue;
+            }
+        }
+
+        $selected = $user->ID == $selected_value ? ' selected' : '';
+        // Add data-url to the option
+        $html .= '<option value="' . $user->ID . '" data-url="' . $user->user_url . '"' . $selected . '>' . $user->user_login . '</option>';
+    }
+    $html .= '</select>';
+    return $html;
+}
 add_action('admin_init', 'linkplugin_settings_init');
 
 // 输出设置区段的内容
@@ -76,38 +103,81 @@ function linkplugin_section_callback() {
 // 输出设置字段的内容
 function linkplugin_field_callback() {
     // 获取当前的设置值
-    $replacements_option = get_option('linkplugin_author_replacements', array());
+    $old_option = get_option('linkplugin_author_replacements_old', array());
+    $new_option = get_option('linkplugin_author_replacements_new', array());
 
-    foreach ($replacements_option as $line) {
-        echo '<p><input type="text" name="linkplugin_author_replacements[]" value="' . esc_attr($line) . '"> <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button></p>';
+    // 获取所有用户
+    $users = get_users();
+
+    $count = max(count($old_option), count($new_option));
+
+    // 如果没有设置任何替换规则，就不显示任何下拉菜单
+    if ($count == 0) {
+        echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add replacement" to add one.</p>';
+    } else {
+        for ($i = 0; $i < $count; $i++) {
+            $old_id = $old_option[$i] ?? '';
+            $new_id = $new_option[$i] ?? '';
+            echo '<p>';
+            echo get_user_id_dropdown('linkplugin_author_replacements_old[]', $old_id, $users);
+            echo ' => ';
+            echo get_user_id_dropdown('linkplugin_author_replacements_new[]', $new_id, $users, true);
+            echo ' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button></p>';
+        }
+        
     }
 
     echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add replacement</button></p>';
+
     echo '<script>
     function linkplugin_remove_replacement(button) {
         var p = button.parentNode;
         p.parentNode.removeChild(p);
+        if (document.querySelectorAll(\'[name="linkplugin_author_replacements_old[]"]\').length == 0) {
+            var no_replacements = document.getElementById("linkplugin_no_replacements");
+            if (!no_replacements) {
+                var new_p = document.createElement("p");
+                new_p.id = "linkplugin_no_replacements";
+                new_p.innerText = "No replacements set. Click \\"Add replacement\\" to add one.";
+                button.parentNode.parentNode.insertBefore(new_p, button.parentNode);
+            }
+        }
     }
     function linkplugin_add_replacement() {
         var p = document.createElement("p");
-        p.innerHTML = \'<input type="text" name="linkplugin_author_replacements[]" value=""> <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button>\';
+        var old_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_old[]', '', $users)) . '\';
+        var new_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_new[]', '', $users, true)) . '\';
+        p.innerHTML = old_dropdown + " => " + new_dropdown + \' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button>\';
         var add_button = document.querySelector("button[onclick=\'linkplugin_add_replacement()\']");
         add_button.parentNode.insertBefore(p, add_button);
+        var no_replacements = document.getElementById("linkplugin_no_replacements");
+        if (no_replacements) {
+            no_replacements.parentNode.removeChild(no_replacements);
+        }
+        // Group and sort options in the dropdown menus
+        var selectElements = p.querySelectorAll(\'select\');
+        selectElements.forEach(function(select) {
+            var optionsArray = Array.prototype.slice.call(select.options);
+            optionsArray.sort(function(a, b) {
+                return a.dataset.url.localeCompare(b.dataset.url) || a.text.localeCompare(b.text);
+            });
+            optionsArray.forEach(function(option) {
+                select.appendChild(option);
+            });
+        });
     }
+    
     </script>';
 }
 
 // 在复制文章时使用设置的替换规则
 function my_copy_posts_plugin_copy_cached_post( $post_id ) {
     $post = get_post( $post_id );
-    
+
     // 获取设置的作者ID替换规则
-    $replacements_option = get_option('linkplugin_author_replacements', array());
-    $author_id_replacements = array();
-    foreach ($replacements_option as $line) {
-        list($old_id, $new_id) = explode(':', trim($line));
-        $author_id_replacements[$old_id] = $new_id;
-    }
+    $old_option = get_option('linkplugin_author_replacements_old', array());
+    $new_option = get_option('linkplugin_author_replacements_new', array());
+    $author_id_replacements = array_combine($old_option, $new_option);
 
     // 检查文章类型
     if ( 'friend_post_cache' !== $post->post_type ) {

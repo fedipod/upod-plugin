@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: ActivityPub post 
+ * Plugin Name: ActivityPub post Converter
  * Plugin URI: https://github.com/MOMOZAWA3/ActivityPub-post-Converter
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO

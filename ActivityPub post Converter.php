@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: ActivityPub post converter
+ * Plugin Name: ActivityPub post 
  * Plugin URI: https://github.com/MOMOZAWA3/ActivityPub-post-Converter
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO
@@ -12,11 +12,8 @@ if ( ! defined( 'ABSPATH' ) ){
     die;
 };
 
-add_action( 'admin_notices', 'my_admin_notices' );
-
 function my_admin_notices() {
     global $pagenow;
-
     // 仅在插件设置页面生成通知
     if ($pagenow == 'options-general.php' && $_GET['page'] == 'linkplugin') {
         $plugins_required = array(
@@ -52,6 +49,7 @@ function my_admin_notices() {
         }
     }
 }
+add_action( 'admin_notices', 'my_admin_notices' );
 
 function handle_linkplugin_create_user() {
     // 检查是否设置了必要的POST变量
@@ -78,7 +76,6 @@ function handle_linkplugin_create_user() {
         // 用户已存在，存储错误消息到transients
         set_transient('linkplugin_create_user_error', 'User already exists.', 60);
     }
-
     // 重定向回原页面
     wp_redirect($_SERVER['HTTP_REFERER']);
     exit;
@@ -260,25 +257,21 @@ function get_user_id_dropdown($name, $selected_value, $users, $hasEmail = false)
     $html .= '</select>';
     return $html;
 }
-
 add_action('admin_init', 'linkplugin_settings_init');
 
 // 输出设置区段的内容
 function linkplugin_section_callback() {
     echo 'Author obtained through the Reveal plugin. Enter the author Associations here.';
 }
-
 // 输出设置字段的内容
 function linkplugin_field_callback() {
     // 获取当前的设置值
     $old_option = get_option('linkplugin_author_replacements_old', array());
     $new_option = get_option('linkplugin_author_replacements_new', array());
-
     // 获取所有用户
     $users = get_users();
 
     $count = max(count($old_option), count($new_option));
-
     // 如果没有设置任何替换规则，就不显示任何下拉菜单
     if ($count == 0) {
         echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New Associations<?php" to add one.</p>';
@@ -388,5 +381,4 @@ function my_copy_posts_plugin_copy_cached_post( $post_id ) {
     );
     wp_update_post( $new_post_private );
 }
-
 add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );

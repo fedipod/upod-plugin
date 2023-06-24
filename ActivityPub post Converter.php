@@ -36,22 +36,22 @@ function my_admin_notices() {
                 'name' => 'Reveal IDs'
             ),
         );
+
         include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 
         foreach ($plugins_required as $plugin) {
             if (!file_exists(WP_PLUGIN_DIR.'/'.$plugin['path'])) {
                 echo '<div class="notice notice-warning is-dismissible">
-                    <p>'.$plugin['name'].'插件未安装！请<a href="'.$plugin['url'].'">点击此处</a>下载并安装。</p>
+                    <p>'.$plugin['name'].' The plugin is not installed! Please <a href="'. admin_url('plugin-install.php?tab=search&type=term&s=' . urlencode($plugin['name'])) .'" >click here</a> to download, install, and enable it.</p>
                 </div>';
             } elseif (!is_plugin_active($plugin['path'])) {
                 echo '<div class="notice notice-warning is-dismissible">
-                    <p>'.$plugin['name'].'插件已安装但未启用！请前往<a href="'.admin_url('plugins.php').'">插件页面</a>启用它。</p>
+                    <p>'.$plugin['name'].' Plugin is installed but not enabled! Please go to <a href="'.admin_url('plugins.php').'">Plugin page</a> to enable it.</p>
                 </div>';
             }
         }
     }
 }
-
 
 // 创建一个新的插件设置页面
 function linkplugin_settings_page() {

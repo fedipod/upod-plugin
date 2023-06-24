@@ -12,6 +12,47 @@ if ( ! defined( 'ABSPATH' ) ){
     die;
 };
 
+add_action( 'admin_notices', 'my_admin_notices' );
+
+function my_admin_notices() {
+    global $pagenow;
+
+    // 仅在插件设置页面生成通知
+    if ($pagenow == 'options-general.php' && $_GET['page'] == 'linkplugin') {
+        $plugins_required = array(
+            array(
+                'path' => 'activitypub/activitypub.php', 
+                'url' => 'https://wordpress.org/plugins/activitypub/',
+                'name' => 'ActivityPub'
+            ),
+            array(
+                'path' => 'friends/friends.php', 
+                'url' => 'https://wordpress.org/plugins/friends/',
+                'name' => 'Friends'
+            ),
+            array(
+                'path' => 'reveal-ids-for-wp-admin-25/reveal-ids-for-wp-admin-25.php', 
+                'url' => 'https://wordpress.org/plugins/reveal-ids-for-wp-admin-25/',
+                'name' => 'Reveal IDs'
+            ),
+        );
+        include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+
+        foreach ($plugins_required as $plugin) {
+            if (!file_exists(WP_PLUGIN_DIR.'/'.$plugin['path'])) {
+                echo '<div class="notice notice-warning is-dismissible">
+                    <p>'.$plugin['name'].'插件未安装！请<a href="'.$plugin['url'].'">点击此处</a>下载并安装。</p>
+                </div>';
+            } elseif (!is_plugin_active($plugin['path'])) {
+                echo '<div class="notice notice-warning is-dismissible">
+                    <p>'.$plugin['name'].'插件已安装但未启用！请前往<a href="'.admin_url('plugins.php').'">插件页面</a>启用它。</p>
+                </div>';
+            }
+        }
+    }
+}
+
+
 // 创建一个新的插件设置页面
 function linkplugin_settings_page() {
     add_options_page('ActivityPub post Converter Settings', 'ActivityPub post Converter', 'manage_options', 'linkplugin', 'linkplugin_settings_page_content');

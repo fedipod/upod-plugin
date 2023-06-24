@@ -53,6 +53,59 @@ function my_admin_notices() {
     }
 }
 
+function handle_linkplugin_create_user() {
+    // 检查是否设置了必要的POST变量
+    if (!isset($_POST['new_username'], $_POST['new_useremail'], $_POST['new_userpass'])) {
+        wp_die('Missing POST variables.');
+    }
+
+    $username = $_POST['new_username'];
+    $email = $_POST['new_useremail'];
+    $password = $_POST['new_userpass'];
+
+    $user_id = username_exists($username);
+
+    if (!$user_id && email_exists($email) == false) {
+        $user_id = wp_create_user($username, $password, $email);
+        if (!is_wp_error($user_id)) {
+            // 创建用户成功，存储成功消息到transients
+            set_transient('linkplugin_create_user_message', 'User created successfully.', 60);
+        } else {
+            // 创建用户失败，存储错误消息到transients
+            set_transient('linkplugin_create_user_error', 'Error creating user: ' . $user_id->get_error_message(), 60);
+        }
+    } else {
+        // 用户已存在，存储错误消息到transients
+        set_transient('linkplugin_create_user_error', 'User already exists.', 60);
+    }
+
+    // 重定向回原页面
+    wp_redirect($_SERVER['HTTP_REFERER']);
+    exit;
+}
+add_action('admin_post_linkplugin_create_user', 'handle_linkplugin_create_user');
+
+function handle_linkplugin_delete_user() {
+    if (!isset($_GET['user_id'])) {
+        wp_die('Missing user_id GET variable.');
+    }
+
+    $user_id = intval($_GET['user_id']);
+
+    if (wp_delete_user($user_id)) {
+        // 删除用户成功，存储成功消息到transients
+        set_transient('linkplugin_delete_user_message', 'User deleted successfully.', 60);
+    } else {
+        // 删除用户失败，存储错误消息到transients
+        set_transient('linkplugin_delete_user_error', 'Error deleting user.', 60);
+    }
+
+    // 重定向回原页面
+    wp_redirect($_SERVER['HTTP_REFERER']);
+    exit;
+}
+add_action('admin_post_linkplugin_delete_user', 'handle_linkplugin_delete_user');
+
 // 创建一个新的插件设置页面
 function linkplugin_settings_page() {
     add_options_page('ActivityPub post Converter Settings', 'ActivityPub post Converter', 'manage_options', 'linkplugin', 'linkplugin_settings_page_content');
@@ -65,6 +118,27 @@ function linkplugin_settings_page_content() {
     if (!is_user_logged_in()) {
         return;
     }
+
+      // 显示transients中的消息
+      if ($message = get_transient('linkplugin_create_user_message')) {
+        echo '<div class="updated notice"><p>' . $message . '</p></div>';
+        delete_transient('linkplugin_create_user_message');
+    }
+
+    if ($error = get_transient('linkplugin_create_user_error')) {
+        echo '<div class="error notice"><p>' . $error . '</p></div>';
+        delete_transient('linkplugin_create_user_error');
+    }
+    // 显示用户列表
+     $users = get_users();
+
+     // 分类用户
+    $users_with_email = array_filter($users, function($user) {
+        return !empty($user->user_email);
+    });
+    $users_without_email = array_filter($users, function($user) {
+        return empty($user->user_email);
+    });
 
     // 显示设置表单
     ?>
@@ -81,6 +155,58 @@ function linkplugin_settings_page_content() {
             ?>
         </form>
     </div>
+    <h2>Create New User</h2>
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+        <input type="hidden" name="action" value="linkplugin_create_user" />
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="new_username">Username</label></th>
+                <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_useremail">Email</label></th>
+                <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_userpass">Password</label></th>
+                <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
+            </tr>
+        </table>
+        <?php submit_button('Create User'); ?>
+    </form>
+    <div class="linkplugin-user-lists">
+        <div class="linkplugin-user-list">
+        <div class="linkplugin-user-list">
+            <h2>ActivityPub Copy Users</h2>
+            <?php linkplugin_show_user_table($users_without_email); ?>
+        </div>
+            <h2>Wordpress Users</h2>
+            <?php linkplugin_show_user_table($users_with_email); ?>
+        </div>
+    </div>
+    <?php
+}
+    // 显示用户表格
+function linkplugin_show_user_table($users){
+    ?>
+    <table class="wp-list-table widefat fixed striped users">
+        <thead>
+            <tr>
+                <th scope="col" class="manage-column column-name">Username</th>
+                <th scope="col" class="manage-column column-email">Email</th>
+                <th scope="col" class="manage-column column-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($users as $user) : ?>
+                <tr>
+                    <td><?php echo $user->user_login; ?></td>
+                    <td><?php echo $user->user_email; ?></td>
+                    <td><a href="<?php echo esc_url(admin_url('admin-post.php?action=linkplugin_delete_user&user_id=' . $user->ID)); ?>" onclick="return confirm('Are you sure?')">Delete</a></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
     <?php
 }
 
@@ -108,32 +234,33 @@ function linkplugin_settings_init() {
     );
 }
 
-function get_user_id_dropdown($name, $selected_value, $users, $forCurrentWebsite = false) {
+function get_user_id_dropdown($name, $selected_value, $users, $hasEmail = false) {
     $html = '<select name="' . $name . '">';
     // Add default empty option
     $html .= '<option value=""></option>';
     foreach ($users as $user) {
-        $website = $user->user_url;
+        $email = $user->user_email;
 
-        $isCurrentWebsite = empty($website) || parse_url(site_url(), PHP_URL_HOST) == parse_url($website, PHP_URL_HOST);
+        $isHasEmail = !empty($email);
 
-        if($forCurrentWebsite) {
-            if (!$isCurrentWebsite) {
+        if($hasEmail) {
+            if (!$isHasEmail) {
                 continue;
             }
         } else {
-            if ($isCurrentWebsite) {
+            if ($isHasEmail) {
                 continue;
             }
         }
 
         $selected = $user->ID == $selected_value ? ' selected' : '';
-        // Add data-url to the option
-        $html .= '<option value="' . $user->ID . '" data-url="' . $user->user_url . '"' . $selected . '>' . $user->user_login . '</option>';
+        // Add data-email to the option
+        $html .= '<option value="' . $user->ID . '" data-email="' . $user->user_email . '"' . $selected . '>' . $user->user_login . '</option>';
     }
     $html .= '</select>';
     return $html;
 }
+
 add_action('admin_init', 'linkplugin_settings_init');
 
 // 输出设置区段的内容
@@ -162,7 +289,7 @@ function linkplugin_field_callback() {
             echo '<p>';
             echo get_user_id_dropdown('linkplugin_author_replacements_old[]', $old_id, $users);
             echo ' => ';
-            echo get_user_id_dropdown('linkplugin_author_replacements_new[]', $new_id, $users, true);
+            echo get_user_id_dropdown('linkplugin_author_replacements_new[]', $new_id, $users, true);            
             echo ' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button></p>';
         }
         

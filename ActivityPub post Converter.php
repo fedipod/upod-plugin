@@ -150,6 +150,33 @@ function linkplugin_settings_page_content() {
             // 输出保存设置的按钮
             submit_button('Save Changes');
             ?>
+            <div class="wrap">
+        <h1>Friends Plugin Settings</h1>
+
+        <button id="myButton">Click to Add New Friends Page</button>
+        <button id="myButton2">Click to Friends&Request Page</button>
+    </div>
+
+    <script>
+    jQuery(document).ready(function($) {
+        var myButton = $('#myButton');
+        var myButton2 = $('#myButton2');
+
+        myButton.on('click', function(event) {
+            event.preventDefault();
+
+            // 跳转到"add-friend"页面
+            window.location.href = '<?php echo admin_url("admin.php?page=add-friend"); ?>';
+        });
+
+        myButton2.on('click', function(event) {
+            event.preventDefault();
+
+            // 跳转到"friends-list"页面
+            window.location.href = '<?php echo admin_url("admin.php?page=friends-list"); ?>';
+        });
+    });
+    </script>
         </form>
     </div>
     <h2>Create New User</h2>
@@ -216,7 +243,7 @@ function linkplugin_settings_init() {
     // 在linkplugin设置页面添加一个新的设置区段
     add_settings_section(
         'linkplugin_section',
-        'Author Associations',
+        'User Connection',
         'linkplugin_section_callback',
         'linkplugin'
     );
@@ -224,7 +251,7 @@ function linkplugin_settings_init() {
     // 在linkplugin设置区段添加一个新的设置字段
     add_settings_field(
         'linkplugin_field',
-        'Author Associations',
+        'User Connection',
         'linkplugin_field_callback',
         'linkplugin',
         'linkplugin_section'
@@ -274,7 +301,7 @@ function linkplugin_field_callback() {
     $count = max(count($old_option), count($new_option));
     // 如果没有设置任何替换规则，就不显示任何下拉菜单
     if ($count == 0) {
-        echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New Associations<?php" to add one.</p>';
+        echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New User Connection<?php" to add one.</p>';
     } else {
         for ($i = 0; $i < $count; $i++) {
             $old_id = $old_option[$i] ?? '';
@@ -283,12 +310,12 @@ function linkplugin_field_callback() {
             echo get_user_id_dropdown('linkplugin_author_replacements_old[]', $old_id, $users);
             echo ' => ';
             echo get_user_id_dropdown('linkplugin_author_replacements_new[]', $new_id, $users, true);            
-            echo ' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button></p>';
+            echo ' <button type="button" onclick="linkplugin_remove_replacement(this)">Delete</button></p>';
         }
         
     }
 
-    echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New Associations</button></p>';
+    echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New User Connection</button></p>';
 
     echo '<script>
     function linkplugin_remove_replacement(button) {
@@ -364,15 +391,18 @@ function my_copy_posts_plugin_copy_cached_post( $post_id ) {
         return;
     }
 
-    // 复制文章
-    $new_post = array(
-        'post_title'   => $post->post_title,
-        'post_content' => $post->post_content,
-        'post_status'  => 'publish',
-        'post_type'    => 'post',
-        'post_author'  => $new_author->ID, // 设置指定的用户为新作者
-    );
-    $new_post_id = wp_insert_post( $new_post );
+   // 获取原先文章的作者
+$original_author = get_user_by('id', $post->post_author);
+
+// 复制文章
+$new_post = array(
+    'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
+    'post_content' => $post->post_content, // 保持文章内容不变
+    'post_status'  => 'publish',
+    'post_type'    => 'post',
+    'post_author'  => $new_author->ID, // 设置指定的用户为新作者
+);
+$new_post_id = wp_insert_post( $new_post );
 
     // 立即将文章设为私有
     $new_post_private = array(

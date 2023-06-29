@@ -26,12 +26,7 @@ function my_admin_notices() {
                 'path' => 'friends/friends.php', 
                 'url' => 'https://wordpress.org/plugins/friends/',
                 'name' => 'Friends'
-            ),
-            array(
-                'path' => 'reveal-ids-for-wp-admin-25/reveal-ids-for-wp-admin-25.php', 
-                'url' => 'https://wordpress.org/plugins/reveal-ids-for-wp-admin-25/',
-                'name' => 'Reveal IDs'
-            ),
+            ),     
         );
 
         include_once( ABSPATH . 'wp-admin/includes/plugin.php' );

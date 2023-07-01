@@ -388,14 +388,15 @@
      // 获取原先文章的作者
      $original_author = get_user_by('id', $post->post_author);
  
-     // 复制文章
-     $new_post = array(
-         'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
-         'post_content' => $post->post_content, // 保持文章内容不变
-         'post_status'  => 'publish',
-         'post_type'    => 'post',
-         'post_author'  => $new_author->ID, // 设置指定的用户为新作者
-     );
-     $new_post_id = wp_insert_post( $new_post );
-}
-     add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );
+        // 复制文章
+        $new_post = array(
+            'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
+            'post_content' => "<!-- wp:paragraph {\"className\":\"only-friends\"} -->\n<p class=\"only-friends\">" . $post->post_content . "</p>\n<!-- /wp:paragraph -->", // 包装文章内容到一个带有"only-friends"类的段落块中
+            'post_status'  => 'publish',
+            'post_type'    => 'post',
+            'post_author'  => $new_author->ID, // 设置指定的用户为新作者
+        );
+        $new_post_id = wp_insert_post( $new_post );
+    }
+    add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );
+    

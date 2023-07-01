@@ -246,7 +246,7 @@
      // 在linkplugin设置区段添加一个新的设置字段
      add_settings_field(
          'linkplugin_field',
-         'User Connection',
+         '',
          'linkplugin_field_callback',
          'linkplugin',
          'linkplugin_section'
@@ -281,12 +281,11 @@
  }
  add_action('admin_init', 'linkplugin_settings_init');
  
- // 输出设置区段的内容
- function linkplugin_section_callback() {
-     echo 'Author obtained through the Reveal plugin. Enter the author Associations here.';
- }
  // 输出设置字段的内容
  function linkplugin_field_callback() {
+       // 添加包裹设置字段内容的 div 元素，并应用左边距样式
+       echo '<div style="margin-left: -225px;">';
+       echo '<div style="margin-top: -25px;">';
      // 获取当前的设置值
      $old_option = get_option('linkplugin_author_replacements_old', array());
      $new_option = get_option('linkplugin_author_replacements_new', array());
@@ -398,22 +397,5 @@
          'post_author'  => $new_author->ID, // 设置指定的用户为新作者
      );
      $new_post_id = wp_insert_post( $new_post );
- 
-     // 把新文章的ID添加到隐藏文章的数组中
-     $hidden_post_ids = get_option('my_hidden_posts', array());
-     $hidden_post_ids[] = $new_post_id;
-     update_option('my_hidden_posts', $hidden_post_ids);
- }
- add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );
- 
- function my_hide_posts_pre_get_posts( $query ) {
-     // 检查是否是主查询、是否在前台进行，以及是否在特定的页面进行
-     if ( $query->is_main_query() && !is_admin() && is_home() ) {
-         // 获取被隐藏的文章ID
-         $hidden_post_ids = get_option('my_hidden_posts', array());
- 
-         // 修改查询以排除被隐藏的文章
-         $query->set( 'post__not_in', $hidden_post_ids );
-     }
- }
- add_action( 'pre_get_posts', 'my_hide_posts_pre_get_posts' );
+}
+     add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );

@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: ActivityPub post Converter
+ * Plugin Name: ActivityPub post
  * Plugin URI: https://github.com/MOMOZAWA3/ActivityPub-post-Converter
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO
@@ -354,49 +354,48 @@
  
  // 在复制文章时使用设置的替换规则
  function my_copy_posts_plugin_copy_cached_post( $post_id ) {
-     $post = get_post( $post_id );
- 
-     // 获取设置的作者ID替换规则
-     $old_option = get_option('linkplugin_author_replacements_old', array());
-     $new_option = get_option('linkplugin_author_replacements_new', array());
-     $author_id_replacements = array_combine($old_option, $new_option);
- 
-     // 检查文章类型
-     if ( 'friend_post_cache' !== $post->post_type ) {
-         return;
-     }
- 
-     // 获取原始作者ID
-     $original_author_id = $post->post_author;
- 
-     // 检查原始作者ID是否在$author_id_replacements中，如果在，则替换为相应的新作者ID
-     if ( array_key_exists( $original_author_id, $author_id_replacements ) ) {
-         $new_author_id = $author_id_replacements[ $original_author_id ];
-     } else {
-         // 如果原始作者ID不在替换规则中，不复制文章
-         return;
-     }
- 
-     // 获取用户对象
-     $new_author = get_user_by( 'id', $new_author_id );
- 
-     // 如果用户不存在，则返回
-     if ( ! $new_author ) {
-         return;
-     }
- 
-     // 获取原先文章的作者
-     $original_author = get_user_by('id', $post->post_author);
- 
-        // 复制文章
-        $new_post = array(
-            'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
-            'post_content' => "<!-- wp:paragraph {\"className\":\"only-friends\"} -->\n<p class=\"only-friends\">" . $post->post_content . "</p>\n<!-- /wp:paragraph -->", // 包装文章内容到一个带有"only-friends"类的段落块中
-            'post_status'  => 'publish',
-            'post_type'    => 'post',
-            'post_author'  => $new_author->ID, // 设置指定的用户为新作者
-        );
-        $new_post_id = wp_insert_post( $new_post );
-    }
-    add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );
+    $post = get_post( $post_id );
+
+    // 获取设置的作者ID替换规则
+    $old_option = get_option('linkplugin_author_replacements_old', array());
+    $new_option = get_option('linkplugin_author_replacements_new', array());
     
+    // 检查文章类型
+    if ( 'friend_post_cache' !== $post->post_type ) {
+        return;
+    }
+
+    // 获取原始作者ID
+    $original_author_id = $post->post_author;
+
+    // 获取原先文章的作者
+    $original_author = get_user_by('id', $original_author_id);
+    
+    // 检查原始作者ID是否在$old_option中，如果在，则替换为相应的新作者ID
+    if ( in_array( $original_author_id, $old_option ) ) {
+        $indices = array_keys($old_option, $original_author_id); // 获取所有匹配项的索引
+        
+        foreach($indices as $index){
+            $new_author_id = $new_option[$index]; // 根据每个索引，获取新作者ID
+            
+            // 获取用户对象
+            $new_author = get_user_by( 'id', $new_author_id );
+            
+            // 如果用户不存在，则继续下一个循环
+            if ( ! $new_author ) {
+                continue;
+            }
+    
+            // 复制文章
+            $new_post = array(
+                'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
+                'post_content' => "<!-- wp:paragraph {\"className\":\"only-friends\"} -->\n<p class=\"only-friends\">" . $post->post_content . "</p>\n<!-- /wp:paragraph -->", // 包装文章内容到一个带有"only-friends"类的段落块中
+                'post_status'  => 'publish',
+                'post_type'    => 'post',
+                'post_author'  => $new_author->ID, // 设置指定的用户为新作者
+            );
+            $new_post_id = wp_insert_post( $new_post );
+        }
+    }
+}
+add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );

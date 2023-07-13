@@ -47,34 +47,58 @@
  add_action( 'admin_notices', 'my_admin_notices' );
  
  function handle_linkplugin_create_user() {
-     // 检查是否设置了必要的POST变量
-     if (!isset($_POST['new_username'], $_POST['new_useremail'], $_POST['new_userpass'])) {
-         wp_die('Missing POST variables.');
-     }
- 
-     $username = $_POST['new_username'];
-     $email = $_POST['new_useremail'];
-     $password = $_POST['new_userpass'];
- 
-     $user_id = username_exists($username);
- 
-     if (!$user_id && email_exists($email) == false) {
-         $user_id = wp_create_user($username, $password, $email);
-         if (!is_wp_error($user_id)) {
-             // 创建用户成功，存储成功消息到transients
-             set_transient('linkplugin_create_user_message', 'User created successfully.', 60);
-         } else {
-             // 创建用户失败，存储错误消息到transients
-             set_transient('linkplugin_create_user_error', 'Error creating user: ' . $user_id->get_error_message(), 60);
-         }
-     } else {
-         // 用户已存在，存储错误消息到transients
-         set_transient('linkplugin_create_user_error', 'User already exists.', 60);
-     }
-     // 重定向回原页面
-     wp_redirect($_SERVER['HTTP_REFERER']);
-     exit;
- }
+    // 检查是否设置了必要的POST变量
+    if (!isset($_POST['new_username'], $_POST['new_useremail'], $_POST['new_userpass'])) {
+        wp_die('Missing POST variables for first user.');
+    }
+
+    $username = $_POST['new_username'];
+    $email = $_POST['new_useremail'];
+    $password = $_POST['new_userpass'];
+
+    $user_id = username_exists($username);
+
+    if (!$user_id && email_exists($email) == false) {
+        $user_id = wp_create_user($username, $password, $email);
+        if (!is_wp_error($user_id)) {
+            // 创建用户成功，存储成功消息到transients
+            set_transient('linkplugin_create_user_message', 'First user created successfully.', 60);
+        } else {
+            // 创建用户失败，存储错误消息到transients
+            set_transient('linkplugin_create_user_error', 'Error creating first user: ' . $user_id->get_error_message(), 60);
+        }
+    } else {
+        // 用户已存在，存储错误消息到transients
+        set_transient('linkplugin_create_user_error', 'First user already exists.', 60);
+    }
+   
+    // Check for second user
+    if (isset($_POST['new_username2'], $_POST['new_useremail2'], $_POST['new_userpass2'])) {
+        $username2 = $_POST['new_username2'];
+        $email2 = $_POST['new_useremail2'];
+        $password2 = $_POST['new_userpass2'];
+
+        $user_id2 = username_exists($username2);
+
+        if (!$user_id2 && email_exists($email2) == false) {
+            $user_id2 = wp_create_user($username2, $password2, $email2);
+            if (!is_wp_error($user_id2)) {
+                // 创建用户成功，存储成功消息到transients
+                set_transient('linkplugin_create_user_message', 'Second user created successfully.', 60);
+            } else {
+                // 创建用户失败，存储错误消息到transients
+                set_transient('linkplugin_create_user_error', 'Error creating second user: ' . $user_id2->get_error_message(), 60);
+            }
+        } else {
+            // 用户已存在，存储错误消息到transients
+            set_transient('linkplugin_create_user_error', 'Second user already exists.', 60);
+        }
+    }
+
+    // 重定向回原页面
+    wp_redirect($_SERVER['HTTP_REFERER']);
+    exit;
+}
  add_action('admin_post_linkplugin_create_user', 'handle_linkplugin_create_user');
  
  function handle_linkplugin_delete_user() {
@@ -174,32 +198,58 @@
      </script>
          </form>
      </div>
-     <h2>Create New User</h2>
-     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-         <input type="hidden" name="action" value="linkplugin_create_user" />
-         <table class="form-table" role="presentation">
-             <tr>
-                 <th scope="row"><label for="new_username">Username</label></th>
-                 <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
-             </tr>
-             <tr>
-                 <th scope="row"><label for="new_useremail">Email</label></th>
-                 <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
-             </tr>
-             <tr>
-                 <th scope="row"><label for="new_userpass">Password</label></th>
-                 <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
-             </tr>
-         </table>
-         <?php submit_button('Create User'); ?>
-     </form>
+     <div style="display: flex; justify-content: space-between;">
+    <div>
+        <h2>New virtual character</h2>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="linkplugin_create_user" />
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><label for="new_username">Username</label></th>
+                    <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="new_useremail">Email</label></th>
+                    <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="new_userpass">Password</label></th>
+                    <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
+                </tr>
+            </table>
+            <?php submit_button('Add virtual character'); ?>
+        </form>
+    </div>
+    <div>
+        <h2>New IoT User</h2>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="linkplugin_create_user" />
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><label for="new_username2">Username</label></th>
+                    <td><input name="new_username2" type="text" id="new_username2" class="regular-text" required /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="new_useremail2">Email</label></th>
+                    <td><input name="new_useremail2" type="email" id="new_useremail2" class="regular-text" required /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="new_userpass2">Password</label></th>
+                    <td><input name="new_userpass2" type="password" id="new_userpass2" class="regular-text" required /></td>
+                </tr>
+            </table>
+            <?php submit_button('Add IoT User'); ?>
+        </form>
+    </div>
+</div>
+
      <div class="linkplugin-user-lists">
          <div class="linkplugin-user-list">
          <div class="linkplugin-user-list">
-             <h2>ActivityPub Copy Users</h2>
+             <h2>Robot Users</h2>
              <?php linkplugin_show_user_table($users_without_email); ?>
          </div>
-             <h2>Wordpress Users</h2>
+             <h2>Virtual Characters</h2>
              <?php linkplugin_show_user_table($users_with_email); ?>
          </div>
      </div>

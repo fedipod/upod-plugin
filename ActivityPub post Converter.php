@@ -200,7 +200,7 @@
      </div>
      <div style="display: flex; justify-content: space-between;">
     <div>
-        <h2>New virtual character</h2>
+        <h2>New virtual role</h2>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="linkplugin_create_user" />
             <table class="form-table" role="presentation">
@@ -230,10 +230,6 @@
                     <td><input name="new_username2" type="text" id="new_username2" class="regular-text" required /></td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="new_useremail2">Email</label></th>
-                    <td><input name="new_useremail2" type="email" id="new_useremail2" class="regular-text" required /></td>
-                </tr>
-                <tr>
                     <th scope="row"><label for="new_userpass2">Password</label></th>
                     <td><input name="new_userpass2" type="password" id="new_userpass2" class="regular-text" required /></td>
                 </tr>
@@ -243,13 +239,33 @@
     </div>
 </div>
 
+<div class="linkplugin-user-lists">
+    <h2>IoT Users</h2>
+    <table class="wp-list-table widefat fixed striped users">
+        <thead>
+            <tr>
+                <th scope="col" class="manage-column column-name">Username</th>
+                <th scope="col" class="manage-column column-email">Email</th>
+                <th scope="col" class="manage-column column-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>CarbonDioxide2-21te495.edu2web.com</td>
+                <td></td>
+                <td><a href="admin-post.php?action=linkplugin_delete_user&user_id=1" onclick="return confirm('Are you sure?')">Delete</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
      <div class="linkplugin-user-lists">
          <div class="linkplugin-user-list">
          <div class="linkplugin-user-list">
              <h2>Robot Users</h2>
              <?php linkplugin_show_user_table($users_without_email); ?>
          </div>
-             <h2>Virtual Characters</h2>
+             <h2>Virtual Roles</h2>
              <?php linkplugin_show_user_table($users_with_email); ?>
          </div>
      </div>
@@ -358,7 +374,21 @@
          }
          
      }
- 
+     echo '<select id="new_dropdown2" name="new_dropdown2">
+     <option value="option1">CarbonDioxide2-21te495.edu2web.com</option>
+     <option value="option2">Option 2</option>
+ </select> => 
+ <style>
+    select {
+        width: 300px; /* 你可以根据需要调整这个值 */
+    }
+</style>
+<select id="new_dropdown2" name="new_dropdown2">
+    <option value="option1">CO2</option>
+    <option value="option2">Option 2</option>
+</select>
+     <button type="button">Delete</button>
+     </datalist></p>';
      echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New User Connection</button></p>';
  
      echo '<script>

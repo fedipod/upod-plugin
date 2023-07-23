@@ -46,61 +46,6 @@
  }
  add_action( 'admin_notices', 'my_admin_notices' );
  
- function handle_linkplugin_create_user() {
-    // 检查是否设置了必要的POST变量
-    if (!isset($_POST['new_username'], $_POST['new_useremail'], $_POST['new_userpass'])) {
-        wp_die('Missing POST variables for first user.');
-    }
-
-    $username = $_POST['new_username'];
-    $email = $_POST['new_useremail'];
-    $password = $_POST['new_userpass'];
-
-    $user_id = username_exists($username);
-
-    if (!$user_id && email_exists($email) == false) {
-        $user_id = wp_create_user($username, $password, $email);
-        if (!is_wp_error($user_id)) {
-            // 创建用户成功，存储成功消息到transients
-            set_transient('linkplugin_create_user_message', 'First user created successfully.', 60);
-        } else {
-            // 创建用户失败，存储错误消息到transients
-            set_transient('linkplugin_create_user_error', 'Error creating first user: ' . $user_id->get_error_message(), 60);
-        }
-    } else {
-        // 用户已存在，存储错误消息到transients
-        set_transient('linkplugin_create_user_error', 'First user already exists.', 60);
-    }
-   
-    // Check for second user
-    if (isset($_POST['new_username2'], $_POST['new_useremail2'], $_POST['new_userpass2'])) {
-        $username2 = $_POST['new_username2'];
-        $email2 = $_POST['new_useremail2'];
-        $password2 = $_POST['new_userpass2'];
-
-        $user_id2 = username_exists($username2);
-
-        if (!$user_id2 && email_exists($email2) == false) {
-            $user_id2 = wp_create_user($username2, $password2, $email2);
-            if (!is_wp_error($user_id2)) {
-                // 创建用户成功，存储成功消息到transients
-                set_transient('linkplugin_create_user_message', 'Second user created successfully.', 60);
-            } else {
-                // 创建用户失败，存储错误消息到transients
-                set_transient('linkplugin_create_user_error', 'Error creating second user: ' . $user_id2->get_error_message(), 60);
-            }
-        } else {
-            // 用户已存在，存储错误消息到transients
-            set_transient('linkplugin_create_user_error', 'Second user already exists.', 60);
-        }
-    }
-
-    // 重定向回原页面
-    wp_redirect($_SERVER['HTTP_REFERER']);
-    exit;
-}
- add_action('admin_post_linkplugin_create_user', 'handle_linkplugin_create_user');
- 
  function handle_linkplugin_delete_user() {
      if (!isset($_GET['user_id'])) {
          wp_die('Missing user_id GET variable.');
@@ -148,14 +93,17 @@
      // 显示用户列表
       $users = get_users();
  
-      // 分类用户
-     $users_with_email = array_filter($users, function($user) {
-         return !empty($user->user_email);
-     });
-     $users_without_email = array_filter($users, function($user) {
-         return empty($user->user_email);
-     });
- 
+  // 分类用户
+  $users_without_email = array_filter($users, function($user) {
+    return empty($user->user_email);
+});
+$users_with_app = array_filter($users, function($user) {
+    return !empty($user->user_email) && !empty(get_user_meta($user->ID, '_application_passwords', true));
+});
+$users_without_app = array_filter($users, function($user) {
+    return !empty($user->user_email) && empty(get_user_meta($user->ID, '_application_passwords', true));
+});
+
      // 显示设置表单
      ?>
      <div class="wrap">
@@ -200,73 +148,94 @@
      </div>
      <div style="display: flex; justify-content: space-between;">
     <div>
-        <h2>New virtual role</h2>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="linkplugin_create_user" />
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row"><label for="new_username">Username</label></th>
-                    <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="new_useremail">Email</label></th>
-                    <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="new_userpass">Password</label></th>
-                    <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
-                </tr>
-            </table>
-            <?php submit_button('Add virtual character'); ?>
-        </form>
+    <h2>New virtual role</h2>
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+        <input type="hidden" name="action" value="linkplugin_create_user" />
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="new_username">Username</label></th>
+                <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_useremail">Email</label></th>
+                <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_userpass">Password</label></th>
+                <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_userrole">Role</label></th>
+                <td>
+                    <select name="new_userrole" id="new_userrole" required>
+                        <?php 
+                            $roles = get_editable_roles(); // 获取所有可编辑的用户角色
+                            foreach ($roles as $role_name => $role_info): 
+                        ?>
+                            <option value="<?php echo esc_attr($role_name); ?>">
+                                <?php echo esc_html($role_info['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <?php submit_button('Add virtual role'); ?>
+    </form>
     </div>
     <div>
-        <h2>New IoT User</h2>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="linkplugin_create_user" />
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row"><label for="new_username2">Username</label></th>
-                    <td><input name="new_username2" type="text" id="new_username2" class="regular-text" required /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="new_userpass2">Password</label></th>
-                    <td><input name="new_userpass2" type="password" id="new_userpass2" class="regular-text" required /></td>
-                </tr>
-            </table>
-            <?php submit_button('Add IoT User'); ?>
-        </form>
+    <h2>New IoT User</h2>
+    <form method="POST">
+        <input type="hidden" name="linkplugin_create_user_with_password" value="1">
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row"><label for="username_pw">Username</label></th>
+                <td><input name="username_pw" type="text" id="username_pw" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="password_pw">Password</label></th>
+                <td><input name="password_pw" type="password" id="password_pw" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="email_pw">Email</label></th>
+                <td><input name="email_pw" type="email" id="email_pw" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="app_name">REST API Name</label></th>
+                <td><input name="app_name" type="text" id="app_name" class="regular-text" required /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="new_userrole">Role</label></th>
+                <td>
+                    <select name="new_userrole" id="new_userrole" required>
+                        <?php 
+                            $roles = get_editable_roles(); // 获取所有可编辑的用户角色
+                            foreach ($roles as $role_name => $role_info): 
+                        ?>
+                            <option value="<?php echo esc_attr($role_name); ?>">
+                                <?php echo esc_html($role_info['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <?php submit_button('Create IoT User'); ?>
+    </form>
     </div>
-</div>
-
-<div class="linkplugin-user-lists">
-    <h2>IoT Users</h2>
-    <table class="wp-list-table widefat fixed striped users">
-        <thead>
-            <tr>
-                <th scope="col" class="manage-column column-name">Username</th>
-                <th scope="col" class="manage-column column-email">Email</th>
-                <th scope="col" class="manage-column column-actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>CarbonDioxide2-21te495.edu2web.com</td>
-                <td></td>
-                <td><a href="admin-post.php?action=linkplugin_delete_user&user_id=1" onclick="return confirm('Are you sure?')">Delete</a></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-     <div class="linkplugin-user-lists">
+   </div>
+   <div class="linkplugin-user-lists">
          <div class="linkplugin-user-list">
          <div class="linkplugin-user-list">
+         <div class="linkplugin-user-list">
+         <h2>IoT Users</h2>
+             <?php linkplugin_show_user_table($users_with_app); ?>
+         </div>  
              <h2>Robot Users</h2>
              <?php linkplugin_show_user_table($users_without_email); ?>
          </div>
              <h2>Virtual Roles</h2>
-             <?php linkplugin_show_user_table($users_with_email); ?>
+             <?php linkplugin_show_user_table($users_without_app); ?>
          </div>
      </div>
      <?php
@@ -319,34 +288,38 @@
      );
  }
  
- function get_user_id_dropdown($name, $selected_value, $users, $hasEmail = false) {
-     $html = '<select name="' . $name . '">';
-     // Add default empty option
-     $html .= '<option value=""></option>';
-     foreach ($users as $user) {
-         $email = $user->user_email;
- 
-         $isHasEmail = !empty($email);
- 
-         if($hasEmail) {
-             if (!$isHasEmail) {
-                 continue;
-             }
-         } else {
-             if ($isHasEmail) {
-                 continue;
-             }
-         }
- 
-         $selected = $user->ID == $selected_value ? ' selected' : '';
-         // Add data-email to the option
-         $html .= '<option value="' . $user->ID . '" data-email="' . $user->user_email . '"' . $selected . '>' . $user->user_login . '</option>';
-     }
-     $html .= '</select>';
-     return $html;
- }
- add_action('admin_init', 'linkplugin_settings_init');
- 
+ function get_user_id_dropdown($name, $selected_value, $users, $group = 0) {
+    $html = '<select name="' . $name . '">'; 
+    $html .= '<option value=""></option>'; 
+    foreach ($users as $user) {
+        $email = $user->user_email;
+        $isHasEmail = empty($email);
+
+        $appPassword = get_user_meta($user->ID, '_application_passwords', true);
+        $isHasApp = !empty($appPassword);
+
+        $appPassword = get_user_meta($user->ID, '_application_passwords', true);
+        $isHasnoApp = empty($appPassword);
+
+        if ($group === 0) {  // 第一组：有电子邮件并且有应用程序的用户，或者没有电子邮件的用户
+            if (!$isHasEmail && !$isHasApp && $isHasnoApp) {  // 如果用户有电子邮件但是没有应用程序，跳过这个用户
+                continue;
+            }
+        } else{  // 第二组：有电子邮件但是没有应用程序的用户
+            if ($isHasEmail || $isHasApp && !$isHasnoApp) {  // 如果用户没有电子邮件，或者有应用程序，跳过这个用户
+                continue;
+            }
+        }
+
+        $selected = $user->ID == $selected_value ? ' selected' : '';
+        $html .= '<option value="' . $user->ID . '" data-email="' . $user->user_email . '"' . $selected . '>' . $user->user_login . '</option>';
+    }
+    $html .= '</select>';
+    return $html;
+}
+
+add_action('admin_init', 'linkplugin_settings_init');
+
  // 输出设置字段的内容
  function linkplugin_field_callback() {
        // 添加包裹设置字段内容的 div 元素，并应用左边距样式
@@ -374,21 +347,7 @@
          }
          
      }
-     echo '<select id="new_dropdown2" name="new_dropdown2">
-     <option value="option1">CarbonDioxide2-21te495.edu2web.com</option>
-     <option value="option2">Option 2</option>
- </select> => 
- <style>
-    select {
-        width: 300px; /* 你可以根据需要调整这个值 */
-    }
-</style>
-<select id="new_dropdown2" name="new_dropdown2">
-    <option value="option1">CO2</option>
-    <option value="option2">Option 2</option>
-</select>
-     <button type="button">Delete</button>
-     </datalist></p>';
+
      echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New User Connection</button></p>';
  
      echo '<script>
@@ -406,31 +365,31 @@
          }
      }
      function linkplugin_add_replacement() {
-         var p = document.createElement("p");
-         var old_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_old[]', '', $users)) . '\';
-         var new_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_new[]', '', $users, true)) . '\';
-         p.innerHTML = old_dropdown + " => " + new_dropdown + \' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button>\';
-         var add_button = document.querySelector("button[onclick=\'linkplugin_add_replacement()\']");
-         add_button.parentNode.insertBefore(p, add_button);
-         var no_replacements = document.getElementById("linkplugin_no_replacements");
-         if (no_replacements) {
-             no_replacements.parentNode.removeChild(no_replacements);
-         }
-         // Group and sort options in the dropdown menus
-         var selectElements = p.querySelectorAll(\'select\');
-         selectElements.forEach(function(select) {
-             var optionsArray = Array.prototype.slice.call(select.options);
-             optionsArray.sort(function(a, b) {
-                 return a.dataset.url.localeCompare(b.dataset.url) || a.text.localeCompare(b.text);
-             });
-             optionsArray.forEach(function(option) {
-                 select.appendChild(option);
-             });
-         });
-     }
-     
-     </script>';
- }
+        var p = document.createElement("p");
+        var old_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_old[]', '', $users)) . '\';
+        var new_dropdown = \'' . str_replace("'", "\'", get_user_id_dropdown('linkplugin_author_replacements_new[]', '', $users, true)) . '\';
+        p.innerHTML = old_dropdown + " => " + new_dropdown + \' <button type="button" onclick="linkplugin_remove_replacement(this)">Remove</button>\';
+        var add_button = document.querySelector("button[onclick=\'linkplugin_add_replacement()\']");
+        add_button.parentNode.insertBefore(p, add_button);
+        var no_replacements = document.getElementById("linkplugin_no_replacements");
+        if (no_replacements) {
+            no_replacements.parentNode.removeChild(no_replacements);
+        }
+        // Group and sort options in the dropdown menus
+        var selectElements = p.querySelectorAll(\'select\');
+        selectElements.forEach(function(select) {
+            var optionsArray = Array.prototype.slice.call(select.options);
+            optionsArray.sort(function(a, b) {
+                return a.dataset.url.localeCompare(b.dataset.url) || a.text.localeCompare(b.text);
+            });
+            optionsArray.forEach(function(option) {
+                select.appendChild(option);
+            });
+        });
+    }
+    
+    </script>';
+}  
  
  // 在复制文章时使用设置的替换规则
  function my_copy_posts_plugin_copy_cached_post( $post_id ) {
@@ -440,10 +399,11 @@
     $old_option = get_option('linkplugin_author_replacements_old', array());
     $new_option = get_option('linkplugin_author_replacements_new', array());
     
-    // 检查文章类型
-    if ( 'friend_post_cache' !== $post->post_type ) {
-        return;
-    }
+  // 检查文章类型
+$accepted_post_types = array('friend_post_cache', 'post');
+if ( !in_array($post->post_type, $accepted_post_types) ) {
+    return;
+}
 
     // 获取原始作者ID
     $original_author_id = $post->post_author;
@@ -479,3 +439,64 @@
     }
 }
 add_action( 'save_post', 'my_copy_posts_plugin_copy_cached_post', 10, 1 );
+
+// 处理表单提交
+add_action( 'admin_init', function() {
+   // 检查是否提交了普通用户创建表单
+if ( isset( $_POST['linkplugin_create_user'] ) ) {
+    $username = sanitize_text_field( $_POST['username'] );
+    $password = $_POST['password']; 
+    $email = sanitize_email( $_POST['email'] );
+    $role = sanitize_text_field( $_POST['role'] );
+
+    // 创建用户
+    $user_data = array(
+        'user_login' => $username,
+        'user_pass'  => $password,
+        'user_email' => $email,
+        'role'       => $role, // 添加用户角色
+    );
+
+    $user_id = wp_insert_user( $user_data );
+    if ( is_wp_error( $user_id ) ) {
+        wp_die( $user_id->get_error_message() );
+    }
+}
+
+   // 检查是否提交了创建用户并生成应用程序密码的表单
+if ( isset( $_POST['linkplugin_create_user_with_password'] ) ) {
+    $username_pw = sanitize_text_field( $_POST['username_pw'] );
+    $password_pw = $_POST['password_pw']; 
+    $email_pw = sanitize_email( $_POST['email_pw'] );
+    $app_name = sanitize_text_field( $_POST['app_name'] );
+    $role = sanitize_text_field( $_POST['new_userrole'] ); // 获取提交的角色信息
+
+    // 创建用户
+    $userdata = array(
+        'user_login' => $username_pw,
+        'user_pass'  => $password_pw,
+        'user_email' => $email_pw,
+        'role'       => $role // 设定用户角色
+    );
+    $user_id_pw = wp_insert_user( $userdata ); // 使用wp_insert_user替代wp_create_user
+
+    if ( is_wp_error( $user_id_pw ) ) {
+        wp_die( $user_id_pw->get_error_message() );
+    }
+}
+
+// 创建应用程序密码
+$app_password = WP_Application_Passwords::create_new_application_password( $user_id_pw, array( 'name' => $app_name ) );
+
+// 显示应用程序密码
+if ( !is_wp_error( $app_password ) ) { // Check if NOT an error
+    add_action( 'admin_notices', function() use ( $app_password, $username_pw ) {  // 将 $username_pw 传入到回调函数中
+        ?>
+        <div class="notice notice-success is-dismissible">
+            <p>Your new password for <?php echo esc_html( $username_pw ); ?> is:  <?php echo esc_html( implode( ' ', str_split( $app_password[0], 4 ) ) ); ?></p>
+            <p>Be sure to save this in a safe location. You will not be able to retrieve it.</p>
+        </div>
+        <?php
+    } );
+}
+});

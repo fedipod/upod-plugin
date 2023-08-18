@@ -1,7 +1,7 @@
-# UPOD Plugin #
+# upod plugin #
 
 **Contributors:** NI YUNHAO
-Plugin URI: https://github.com/MOMOZAWA3/UPOD-Plugin
+Plugin URI: https://github.com/fedipod/upod-plugin
 Author URI: http://api.edu2web.com/tinywebdb-api/ 
 Document URI: http://api.edu2web.com/tinywebdb-api/  
 **Donate link:** https://21te495.daiichi-koudai.com
@@ -16,9 +16,9 @@ Support all ActivityPub protocol concerns passed over carefully for copying and 
 
 
 # Description #
-UPOD Plugin is a powerful WordPress plugin that allows you to copy cached bot posts from supported sites and store them as new regular posts in your WordPress site, privately, by using the ActivityPub protocol. Whether you use Mastodon or another social media platform that supports ActivityPub, ActivityPub post Converter provides you with an easy and effective way to import the content you need for yourself into your WordPress environment. With ActivityPub post Converter, you can specify new authors for posts, categorize the bot messages you receive, and easily manage imported posts
+upod plugin is a powerful WordPress plugin that allows you to copy cached bot posts from supported sites and store them as new regular posts in your WordPress site, privately, by using the ActivityPub protocol. Whether you use Mastodon or another social media platform that supports ActivityPub, ActivityPub post Converter provides you with an easy and effective way to import the content you need for yourself into your WordPress environment. With ActivityPub post Converter, you can specify new authors for posts, categorize the bot messages you receive, and easily manage imported posts
 
-UPOD Plugin provides an intuitive settings page that allows you to easily configure author ID replacement rules to ensure that the copied posts correspond to the users you want to correspond to on your site. Whether you are a personal blogger, content creator or social media manager, ActivityPub post Converter will save you time and effort and make your WordPress site
+upod plugin provides an intuitive settings page that allows you to easily configure author ID replacement rules to ensure that the copied posts correspond to the users you want to correspond to on your site. Whether you are a personal blogger, content creator or social media manager, ActivityPub post Converter will save you time and effort and make your WordPress site
 
 
 # Installation #

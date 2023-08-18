@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: UPOD Plugin
- * Plugin URI: https://github.com/MOMOZAWA3/ActivityPub-post-Converter
+ * Plugin URI: https://github.com/MOMOZAWA3/UPOD-Plugin
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO
  * Author: https://21te495.daiichi-koudai.com
@@ -69,7 +69,7 @@
  
  // 创建一个新的插件设置页面
  function linkplugin_settings_page() {
-     add_options_page('ActivityPub post Converter Settings', 'ActivityPub post Converter', 'manage_options', 'linkplugin', 'linkplugin_settings_page_content');
+     add_options_page('UPOD Plugin Settings', 'UPOD Plugin', 'manage_options', 'linkplugin', 'linkplugin_settings_page_content');
  }
  add_action('admin_menu', 'linkplugin_settings_page');
  

@@ -165,9 +165,9 @@ $users_without_app = array_filter($users, function($user) {
                 <td><input name="userpass" type="password" id="userpass" class="regular-text" required /></td>
             </tr>
             <tr>
-                <th scope="row"><label for="userrole">Role</label></th>
+                <th scope="row"><label for="new_userrole">Role</label></th>
                 <td>
-                    <select name="userrole" id="userrole" required>
+                    <select name="new_userrole" id="new_userrole" required>
                         <?php 
                             $roles = get_editable_roles(); // 获取所有可编辑的用户角色
                             foreach ($roles as $role_name => $role_info): 
@@ -449,7 +449,7 @@ if ( isset( $_POST['linkplugin_create_user'] ) ) {
     $username = sanitize_text_field( $_POST['username'] );
     $password = $_POST['password']; 
     $email = sanitize_email( $_POST['email'] );
-    $role = sanitize_text_field( $_POST['role'] );
+    $role = sanitize_text_field( $_POST['new_userrole'] );
 
     // 创建用户
     $user_data = array(

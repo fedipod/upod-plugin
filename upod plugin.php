@@ -149,25 +149,25 @@ $users_without_app = array_filter($users, function($user) {
      <div style="display: flex; justify-content: space-between;">
     <div>
     <h2>New virtual role</h2>
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-        <input type="hidden" name="action" value="linkplugin_create_user" />
+    <form method="POST">
+        <input type="hidden" name="linkplugin_create_user" value="1">
         <table class="form-table" role="presentation">
             <tr>
-                <th scope="row"><label for="new_username">Username</label></th>
-                <td><input name="new_username" type="text" id="new_username" class="regular-text" required /></td>
+                <th scope="row"><label for="username">Username</label></th>
+                <td><input name="username" type="text" id="username" class="regular-text" required /></td>
             </tr>
             <tr>
-                <th scope="row"><label for="new_useremail">Email</label></th>
-                <td><input name="new_useremail" type="email" id="new_useremail" class="regular-text" required /></td>
+                <th scope="row"><label for="useremail">Email</label></th>
+                <td><input name="useremail" type="email" id="useremail" class="regular-text" required /></td>
             </tr>
             <tr>
-                <th scope="row"><label for="new_userpass">Password</label></th>
-                <td><input name="new_userpass" type="password" id="new_userpass" class="regular-text" required /></td>
+                <th scope="row"><label for="userpass">Password</label></th>
+                <td><input name="userpass" type="password" id="userpass" class="regular-text" required /></td>
             </tr>
             <tr>
-                <th scope="row"><label for="new_userrole">Role</label></th>
+                <th scope="row"><label for="userrole">Role</label></th>
                 <td>
-                    <select name="new_userrole" id="new_userrole" required>
+                    <select name="userrole" id="userrole" required>
                         <?php 
                             $roles = get_editable_roles(); // 获取所有可编辑的用户角色
                             foreach ($roles as $role_name => $role_info): 
@@ -184,7 +184,7 @@ $users_without_app = array_filter($users, function($user) {
     </form>
     </div>
     <div>
-    <h2>New IoT User</h2>
+    <h2>New UPOD connection account</h2>
     <form method="POST">
         <input type="hidden" name="linkplugin_create_user_with_password" value="1">
         <table class="form-table" role="presentation">
@@ -192,16 +192,16 @@ $users_without_app = array_filter($users, function($user) {
                 <th scope="row"><label for="username_pw">Username</label></th>
                 <td><input name="username_pw" type="text" id="username_pw" class="regular-text" required /></td>
             </tr>
+			 <tr>
+                <th scope="row"><label for="email_pw">Email</label></th>
+                <td><input name="email_pw" type="email" id="email_pw" class="regular-text" required /></td>
+            </tr>
             <tr>
                 <th scope="row"><label for="password_pw">Password</label></th>
                 <td><input name="password_pw" type="password" id="password_pw" class="regular-text" required /></td>
             </tr>
             <tr>
-                <th scope="row"><label for="email_pw">Email</label></th>
-                <td><input name="email_pw" type="email" id="email_pw" class="regular-text" required /></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="app_name">REST API Name</label></th>
+                <th scope="row"><label for="app_name">UPOD API Name</label></th>
                 <td><input name="app_name" type="text" id="app_name" class="regular-text" required /></td>
             </tr>
             <tr>
@@ -220,7 +220,7 @@ $users_without_app = array_filter($users, function($user) {
                 </td>
             </tr>
         </table>
-        <?php submit_button('Create IoT User'); ?>
+        <?php submit_button('Create UPOD connection account'); ?>
     </form>
     </div>
    </div>
@@ -273,8 +273,8 @@ $users_without_app = array_filter($users, function($user) {
      // 在linkplugin设置页面添加一个新的设置区段
      add_settings_section(
          'linkplugin_section',
-         'User Connection',
-         'linkplugin_section_callback',
+         'Link',
+		 '',
          'linkplugin'
      );
  
@@ -326,15 +326,17 @@ add_action('admin_init', 'linkplugin_settings_init');
        echo '<div style="margin-left: -225px;">';
        echo '<div style="margin-top: -25px;">';
      // 获取当前的设置值
-     $old_option = get_option('linkplugin_author_replacements_old', array());
-     $new_option = get_option('linkplugin_author_replacements_new', array());
+     $old_option = (array) get_option('linkplugin_author_replacements_old', array());
+     $new_option = (array) get_option('linkplugin_author_replacements_new', array());
      // 获取所有用户
      $users = get_users();
- 
      $count = max(count($old_option), count($new_option));
+	 $old_count = (is_array($old_option) || $old_option instanceof Countable) ? count($old_option) : 0;
+$new_count = (is_array($new_option) || $new_option instanceof Countable) ? count($new_option) : 0;
+$count = max($old_count, $new_count);
      // 如果没有设置任何替换规则，就不显示任何下拉菜单
      if ($count == 0) {
-         echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New User Connection<?php" to add one.</p>';
+         echo '<p id="linkplugin_no_replacements">No replacements set. Click "Add New Link" to add one.</p>';
      } else {
          for ($i = 0; $i < $count; $i++) {
              $old_id = $old_option[$i] ?? '';

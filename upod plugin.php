@@ -148,7 +148,7 @@ $users_without_app = array_filter($users, function($user) {
      </div>
      <div style="display: flex; justify-content: space-between;">
     <div>
-    <h2>New virtual role</h2>
+    <h2>New Virtual Role</h2>
     <form method="POST">
         <input type="hidden" name="linkplugin_create_user" value="1">
         <table class="form-table" role="presentation">
@@ -180,11 +180,11 @@ $users_without_app = array_filter($users, function($user) {
                 </td>
             </tr>
         </table>
-        <?php submit_button('Add virtual role'); ?>
+        <?php submit_button('Add New Virtual Role'); ?>
     </form>
     </div>
     <div>
-    <h2>New UPOD connection account</h2>
+    <h2>New UPOD Connection Account</h2>
     <form method="POST">
         <input type="hidden" name="linkplugin_create_user_with_password" value="1">
         <table class="form-table" role="presentation">
@@ -220,7 +220,7 @@ $users_without_app = array_filter($users, function($user) {
                 </td>
             </tr>
         </table>
-        <?php submit_button('Create UPOD connection account'); ?>
+        <?php submit_button('Add New UPOD Connection Account'); ?>
     </form>
     </div>
    </div>
@@ -228,10 +228,10 @@ $users_without_app = array_filter($users, function($user) {
          <div class="linkplugin-user-list">
          <div class="linkplugin-user-list">
          <div class="linkplugin-user-list">
-         <h2>IoT Users</h2>
+         <h2>UPOD Connection Accounts</h2>
              <?php linkplugin_show_user_table($users_with_app); ?>
          </div>  
-             <h2>Robot Users</h2>
+             <h2>Fedi Connection Accounts</h2>
              <?php linkplugin_show_user_table($users_without_email); ?>
          </div>
              <h2>Virtual Roles</h2>
@@ -350,7 +350,7 @@ $count = max($old_count, $new_count);
          
      }
 
-     echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New User Connection</button></p>';
+     echo '<p><button type="button" onclick="linkplugin_add_replacement()">Add New Link</button></p>';
  
      echo '<script>
      function linkplugin_remove_replacement(button) {
@@ -447,15 +447,15 @@ add_action( 'admin_init', function() {
    // 检查是否提交了普通用户创建表单
 if ( isset( $_POST['linkplugin_create_user'] ) ) {
     $username = sanitize_text_field( $_POST['username'] );
-    $password = $_POST['password']; 
-    $email = sanitize_email( $_POST['email'] );
+    $userpass = $_POST['userpass']; 
+    $useremail = sanitize_email( $_POST['useremail'] );
     $role = sanitize_text_field( $_POST['new_userrole'] );
 
     // 创建用户
     $user_data = array(
         'user_login' => $username,
-        'user_pass'  => $password,
-        'user_email' => $email,
+        'user_pass'  => $userpass,
+        'user_email' => $useremail,
         'role'       => $role, // 添加用户角色
     );
 

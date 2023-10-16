@@ -5,7 +5,7 @@
  * Description: Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.
  * Author: NI YUNHAO
  * Author: https://21te495.daiichi-koudai.com
- * Version: 0.1.0
+ * Version: 0.1.1
  */
 
  if ( ! defined( 'ABSPATH' ) ){

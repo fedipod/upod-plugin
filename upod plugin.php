@@ -422,16 +422,19 @@ if ( !in_array($post->post_type, $accepted_post_types) ) {
             
             // 获取用户对象
             $new_author = get_user_by( 'id', $new_author_id );
-            
+
             // 如果用户不存在，则继续下一个循环
             if ( ! $new_author ) {
                 continue;
             }
+       // Create new WordPress post content in HTML format
+        $post_content = "<!-- wp:paragraph {\"className\":\"only-friends\"} -->";
+        $post_content .= "<p class=\"only-friends\">Status: {$row->status}, Graduation: {$row->graduation}, Score: {$score}<br>";
     
             // 复制文章
             $new_post = array(
                 'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
-                'post_content' => "<!-- wp:paragraph {\"className\":\"only-friends\"} -->\n<p class=\"only-friends\">" . $post->post_content . "</p>\n<!-- /wp:paragraph -->", // 包装文章内容到一个带有"only-friends"类的段落块中
+                'post_content' => $post_content, // 使用完整的 post_content
                 'post_status'  => 'publish',
                 'post_type'    => 'post',
                 'post_author'  => $new_author->ID, // 设置指定的用户为新作者

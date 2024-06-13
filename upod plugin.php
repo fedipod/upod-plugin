@@ -427,14 +427,11 @@ if ( !in_array($post->post_type, $accepted_post_types) ) {
             if ( ! $new_author ) {
                 continue;
             }
-       // Create new WordPress post content in HTML format
-        $post_content = "<!-- wp:paragraph {\"className\":\"only-friends\"} -->";
-        $post_content .= "</p><!-- /wp:paragraph -->";
     
             // 复制文章
             $new_post = array(
                 'post_title'   => $original_author->user_login, // 将新文章的标题设为原文章的作者的用户名
-                'post_content' => $post_content, // 使用完整的 post_content
+                'post_content' => "<!-- wp:paragraph {\"className\":\"only-friends\"} -->\n<p class=\"only-friends\">" . $post->post_content . "</p>\n<!-- /wp:paragraph -->",
                 'post_status'  => 'publish',
                 'post_type'    => 'post',
                 'post_author'  => $new_author->ID, // 设置指定的用户为新作者

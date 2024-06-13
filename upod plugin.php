@@ -429,7 +429,7 @@ if ( !in_array($post->post_type, $accepted_post_types) ) {
             }
        // Create new WordPress post content in HTML format
         $post_content = "<!-- wp:paragraph {\"className\":\"only-friends\"} -->";
-        $post_content .= "<p class=\"only-friends\">Status: {$row->status}, Graduation: {$row->graduation}, Score: {$score}<br>";
+        $post_content .= "</p><!-- /wp:paragraph -->";
     
             // 复制文章
             $new_post = array(

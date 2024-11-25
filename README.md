@@ -12,8 +12,8 @@ Document URI: http://api.edu2web.com/tinywebdb-api/
 **License:** GPLv2 or later    
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html   
 **Short Description**  
-Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.  
 
+Support all ActivityPub protocol concerns passed over carefully for copying and converting to WordPress articles, and changing the author to the specified WordPress user.  
 
 # Description #
 upod plugin is a powerful WordPress plugin that allows you to copy cached bot posts from supported sites and store them as new regular posts in your WordPress site, privately, by using the ActivityPub protocol. Whether you use Mastodon or another social media platform that supports ActivityPub, ActivityPub post Converter provides you with an easy and effective way to import the content you need for yourself into your WordPress environment. With ActivityPub post Converter, you can specify new authors for posts, categorize the bot messages you receive, and easily manage imported posts
